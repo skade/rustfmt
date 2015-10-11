@@ -51,6 +51,9 @@ impl Rewrite for ast::Expr {
             ast::Expr_::ExprUnary(ref op, ref subexpr) => {
                 rewrite_unary_op(context, op, subexpr, width, offset)
             }
+            ast::Expr_::ExprBox(ref subexpr) => {
+                rewrite_box(context, subexpr, width, offset)
+            }
             ast::Expr_::ExprStruct(ref path, ref fields, ref base) => {
                 rewrite_struct_lit(context,
                                    path,
@@ -107,7 +110,7 @@ impl Rewrite for ast::Expr {
                               width,
                               offset)
             }
-            ast::Expr_::ExprMatch(ref cond, ref arms, _) => {
+            ast::Expr_::ExprMatch(ref cond, ref arms) => {
                 rewrite_match(context, cond, arms, width, offset)
             }
             ast::Expr_::ExprPath(ref qself, ref path) => {
@@ -1184,11 +1187,23 @@ fn rewrite_unary_op(context: &RewriteContext,
                     -> Option<String> {
     // For some reason, an UnOp is not spanned like BinOp!
     let operator_str = match *op {
-        ast::UnOp::UnUniq => "box ",
         ast::UnOp::UnDeref => "*",
         ast::UnOp::UnNot => "!",
         ast::UnOp::UnNeg => "-",
     };
+    let operator_len = operator_str.len();
+
+    expr.rewrite(context, try_opt!(width.checked_sub(operator_len)), offset + operator_len)
+        .map(|r| format!("{}{}", operator_str, r))
+}
+
+fn rewrite_box(context: &RewriteContext,
+               expr: &ast::Expr,
+               width: usize,
+               offset: usize)
+               -> Option<String> {
+
+    let operator_str = "box ";
     let operator_len = operator_str.len();
 
     expr.rewrite(context, try_opt!(width.checked_sub(operator_len)), offset + operator_len)
