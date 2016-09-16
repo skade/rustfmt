@@ -50,9 +50,6 @@ impl Rewrite for Pat {
                     None
                 }
             }
-            PatKind::QPath(ref q_self, ref path) => {
-                rewrite_path(context, true, Some(q_self), path, width, offset)
-            }
             PatKind::Range(ref lhs, ref rhs) => {
                 rewrite_pair(&**lhs, &**rhs, "", "...", "", context, width, offset)
             }
@@ -71,7 +68,9 @@ impl Rewrite for Pat {
                               width,
                               offset)
             }
-            PatKind::Path(ref path) => rewrite_path(context, true, None, path, width, offset),
+            PatKind::Path(ref q_self, ref path) => {
+                rewrite_path(context, true, q_self.as_ref(), path, width, offset)
+            }
             PatKind::TupleStruct(ref path, ref pat_vec, dotdot_pos) => {
                 let path_str = try_opt!(rewrite_path(context, true, None, path, width, offset));
 
